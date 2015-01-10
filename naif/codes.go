@@ -1,5 +1,7 @@
 package naif
 
+//go:generate go run gennames.go
+
 // Barycenters
 const (
 	BarycenterSolarSystem Code = 0
