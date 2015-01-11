@@ -100,12 +100,19 @@ type SummaryRecord struct {
 	Summary []Summary
 }
 
+// ReadArray reads an array of float64 data from the DAF file.
+//
+// The addressing mechanism is doubly unusual. The file begins at word 1,
+// so the smallest value of start is 1. Moreover the end is inclusive,
+// which means ReadArray(1,1) reads the first word of the file.
+//
+// ftp://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/daf.html#Array%20Addresses
 func (r *Reader) ReadArray(start, end int32) ([]float64, error) {
-	_, err := r.r.Seek(int64(8*start), 0)
+	_, err := r.r.Seek(8*int64(start-1), 0)
 	if err != nil {
 		return nil, fmt.Errorf("daf.ReadArray: %v", err)
 	}
-	count := int(end - start)
+	count := int(end-start) + 1
 	b := make([]byte, 8*count)
 	if _, err := io.ReadFull(r.r, b); err != nil {
 		return nil, fmt.Errorf("daf.ReadArray: %v", err)
