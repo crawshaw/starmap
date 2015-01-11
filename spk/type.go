@@ -6,10 +6,11 @@ package spk
 // See "Supported Data Types" in "SPK required reading" for details.
 type Type int32
 
+// TODO remove, just use interfaces.
 const (
 	ModDiffArrays       Type = 1
-	ChebyshevPosOnly    Type = 2
-	Chebyshev           Type = 3
+	TypChebyshevPosOnly Type = 2
+	TypChebyshev        Type = 3
 	Discrete            Type = 5
 	LagrangeEq          Type = 8
 	LagrangeUneq        Type = 9

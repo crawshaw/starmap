@@ -1,6 +1,7 @@
 package spk
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -26,6 +27,7 @@ func TestReader(t *testing.T) {
 			t.Fatal(err)
 		}
 		_ = s
-		//fmt.Println(s)
+		fmt.Printf("%s-%s (%s) %s\n", s.Target, s.Center, s.RefFrame, s.Type)
+		// ChebyshevPosOnly, and Chebyshev.
 	}
 }

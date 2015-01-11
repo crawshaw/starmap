@@ -28,7 +28,7 @@ func (r *Reader) Next() (*Segment, error) {
 	// DAF specifies that "The initial and final addresses of an array are
 	// always the values of the final two integer components of the summary
 	// for the array" so it could be done there without specific knowledge of SPK.
-	data, err := r.r.ReadArray(r.start[0], r.end[0])
+	buf, err := r.r.ReadArray(r.start[0], r.end[0])
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +36,17 @@ func (r *Reader) Next() (*Segment, error) {
 	r.s = r.s[1:]
 	r.start = r.start[1:]
 	r.end = r.end[1:]
+
+	var data Data
+	switch s.Type {
+	case 2:
+		data, err = newChebyshevPosOnly(buf)
+	case 3:
+		data, err = newChebyshev(buf)
+	}
+	if err != nil {
+		return nil, err
+	}
 	s.Data = data
 	return &s, nil
 }
@@ -47,7 +58,16 @@ type Segment struct {
 	Center   naif.Code
 	RefFrame naif.Code
 	Type     Type
-	Data     []float64
+	Data     Data
+	//Data     []float64
+}
+
+type Data interface {
+	// At computes position and velocity at time t.
+	//
+	// Position is measured in kilometers from the barycenter.
+	// Velocity is measured in kilometers/second.
+	At(t time.Time) (pos, vel [3]float64, err error)
 }
 
 var magic = "DAF/SPK "
