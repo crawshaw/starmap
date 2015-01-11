@@ -19,7 +19,7 @@ type Reader struct {
 	Header FileRecord
 
 	r     io.ReadSeeker
-	next  int64
+	next  int32
 	order binary.ByteOrder
 }
 
@@ -84,7 +84,7 @@ func (r *Reader) readFileRecord() error {
 		return fmt.Errorf("daf: LOCIDW %q, missing DAF/ prefix", h.LOCIDW)
 	}
 
-	r.next = int64(h.FWARD)
+	r.next = int32(h.FWARD)
 	return nil
 }
 
@@ -95,13 +95,31 @@ type Summary struct {
 }
 
 type SummaryRecord struct {
-	Next    int64
-	Prev    int64
+	Next    int32
+	Prev    int32
 	Summary []Summary
 }
 
-func (r *Reader) Read(rec int64) (*SummaryRecord, error) {
-	_, err := r.r.Seek(1024*(rec-1), 0)
+func (r *Reader) ReadArray(start, end int32) ([]float64, error) {
+	_, err := r.r.Seek(int64(8*start), 0)
+	if err != nil {
+		return nil, fmt.Errorf("daf.ReadArray: %v", err)
+	}
+	count := int(end - start)
+	b := make([]byte, 8*count)
+	if _, err := io.ReadFull(r.r, b); err != nil {
+		return nil, fmt.Errorf("daf.ReadArray: %v", err)
+	}
+	res := make([]float64, count)
+	for i := range res {
+		res[i] = math.Float64frombits(r.order.Uint64(b))
+		b = b[8:]
+	}
+	return res, nil
+}
+
+func (r *Reader) Read(rec int32) (*SummaryRecord, error) {
+	_, err := r.r.Seek(1024*int64(rec-1), 0)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +130,8 @@ func (r *Reader) Read(rec int64) (*SummaryRecord, error) {
 	}
 	count := int(math.Float64frombits(r.order.Uint64(b[16:])))
 	s := &SummaryRecord{
-		Next:    int64(math.Float64frombits(r.order.Uint64(b[0:]))),
-		Prev:    int64(math.Float64frombits(r.order.Uint64(b[8:]))),
+		Next:    int32(math.Float64frombits(r.order.Uint64(b[0:]))),
+		Prev:    int32(math.Float64frombits(r.order.Uint64(b[8:]))),
 		Summary: make([]Summary, 0, count),
 	}
 	b = b[24:]
